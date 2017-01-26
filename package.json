@@ -1,0 +1,25 @@
+{
+  "name": "hypergrid-remote-demo",
+  "version": "1.0.0",
+  "description": "Just a Proof of Concept",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.14.0",
+    "express-ws": "^2.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openfin/Hypergrid-Remote-POC.git"
+  },
+  "author": "dwaynekj",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/openfin/Hypergrid-Remote-POC/issues"
+  },
+  "homepage": "https://github.com/openfin/Hypergrid-Remote-POC#readme"
+}
