@@ -2,13 +2,14 @@ function Repository (grid, options){
     var self = this;
     this.grid = grid;
     this.offset = 0; //... from actual server data
+    this.serverSize = 0;
     this.oldOffset = 0;
     this.frameSize = options.bufferLen || 1000; // How much data to request from the server
     this.minFrameSize = this.frameSize; //Lower bound of server request
     this.frameIncrement = 300; //How much to move the offset of the frame
-    this.initialFrame = false; //Very very first frame for building Hypergrid schema
+    this.initialFrame = true; //Very very first frame for building Hypergrid schema
     this.newFrameRecieved = false; //First frame after moving offset
-    this.pollLoopRunning = false; //Simluated blotter updates
+    this.pollLoopRunning = false; //Simulated blotter updates
     this.throttledDataReq = this._dataReq; //Request data at 60FPS, probably best to go a little slower
     this.debouncedScrollingHandler = debounce(this.checkScrollBars, 300);
     this.grid.addEventListener('fin-scroll-y', function(e) {
@@ -66,7 +67,6 @@ Repository.prototype = {
             maxScroll = this.grid.sbVScroller.range.max,
             direction = vscrollValue - oldVScollValue,
             deltaMin = vscrollValue - minScroll,
-            //oneFifth = maxScroll * .20,
             deltaMax = maxScroll - vscrollValue;
 
         if (direction > 0 && deltaMax < this.frameIncrement)  {
@@ -74,13 +74,21 @@ Repository.prototype = {
         } else if (direction < 0 && deltaMin < this.frameIncrement){
             this.reframe(-this.frameIncrement);
         }
-        /*
-         this.grid.scrollVby  // go to
-         this.grid.setVScrollbarValues //range
-         */
     },
     reframe: function(offset){
         console.log("reframe");
+        if (this.offset === 0 && offset < 0) {
+            //Already requesting the top most data
+            console.log("reframe aborted for top");
+            return;
+        }
+
+        if (offset > 0 && (offset + this.offset + this.frameSize) > this.serverSize) {
+            //Already requesting the bottom most data
+            console.log("reframe aborted for bottom");
+            return;
+        }
+
         this.stopPoll();
         this.oldOffset = this.offset;
         this.offset = this.offset + offset;
@@ -91,7 +99,7 @@ Repository.prototype = {
     },
     poll: function(){
         this.pollLoopRunning = true;
-
+        // Could put this in a Webworker
         function pollLoop() {
             if (this.pollLoopRunning) {
                 this.throttledDataReq();
@@ -107,12 +115,14 @@ Repository.prototype = {
     start: function () {
         var self = this;
         this.ws = new WebSocket('ws://localhost:3000');
+        var msgs  = 0;
         var connection = this.ws;
 
         // When the connection is opened, get an initial payload to the server
         connection.onopen = function () {
             console.log("Connection Open");
             self.connectionOpen = true;
+            self.ws.send(JSON.stringify({initial: true}));
             self.throttledDataReq({start: 0, end: self.frameSize});
         };
 
@@ -132,21 +142,30 @@ Repository.prototype = {
 
         // New Data from the server
         connection.onmessage = function (e) {
-            //console.log("Received data");
-            var data = JSON.parse(e.data);
-            self.frame = data;
-            self.grid.setData(self.frame);
-            self.grid.repaint();
-            if (!self.initialFrame){
-                self.initialFrame =  true;
-                //Data Should only reshape during very first call here
-                // self.grid.setData(self.frame); //Build Schema
+            var payload = JSON.parse(e.data);
+            if (payload.dataLen) {
+                self.serverSize = e.dataLen;
+                return;
             }
-            if (!self.newFrameRecieved){
+
+            self.frame = payload;
+            self.grid.setData(self.frame);
+
+            //console.log("Received data: " + ++msgs);
+
+            if (!self.newFrameRecieved) {
                 self.newFrameRecieved = true;
-                self.grid.sbVScroller.index = self.frameSize - self.frameIncrement;
                 self.poll();
-                setTimeout(self.onNewFrame(),0);
+
+                if (!self.initialFrame) {
+                    //self.grid.sbVScroller.index = self.frameSize - self.frameIncrement;
+                    self.grid.setVScrollValue( self.frameSize - self.frameIncrement);
+                }
+
+                if (self.initialFrame) {
+                    self.initialFrame = false;
+                }
+                setTimeout(self.onNewFrame, 0);
             }
         };
     }

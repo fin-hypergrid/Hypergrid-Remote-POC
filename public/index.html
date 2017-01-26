@@ -1,62 +1,67 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
-		<title></title>
-		<style>
-			#fin-grid { width:1000px; height:1005px; margin-top:.5em }
-			.hidden {
-				display: none;
-			}
-            #loader img{
-                height: 100px;
-            }
-		</style>
-	</head>
-	<body>
-		<div id="fin-grid"></div>
-        <div id="loader">Loading... <img src="loader.gif"></div>
-		<script src="repository.js"></script>
-		<script src="fin-hypergrid.js"></script>
-		<script>
+<head>
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<title></title>
+	<style>
+		#fin-grid { width:1000px; height:1005px; margin-top:.5em }
+		.hidden {
+			display: none;
+		}
+		#loader img{
+			height: 100px;
+		}
+	</style>
+</head>
+<body>
+<div id="fin-grid"></div>
+<div id="loader">Loading... <img src="loader.gif"></div>
+<script src="repository.js"></script>
+<script src="fin-hypergrid.js"></script>
+<script>
 
-            var grid = new fin.Hypergrid('#fin-grid', {Behavior:fin.Hypergrid.behaviors.JSON}),
-                    loader = document.getElementById("loader"),
-					repo = new Repository(grid, {bufferLen: 1000});
+	var grid = new fin.Hypergrid('#fin-grid', {Behavior:fin.Hypergrid.behaviors.JSON}),
+			loader = document.getElementById("loader"),
+			repo = new Repository(grid, {bufferLen: 1000});
 
-			repo.onNewFrame = function () {
-				loader.classList.add("hidden");
-			};
+	repo.onNewFrame = function () {
+		loader.classList.add("hidden");
+	};
 
-			repo.onFetch = function () {
-				loader.classList.remove("hidden");
-			};
+	repo.onFetch = function () {
+		loader.classList.remove("hidden");
+	};
 
 
-			grid.addProperties({
-				showRowNumbers: false,
-				showFilterRow: false,
-				backgroundColor: 'white',
-				foregroundSelectionFont: '13px Tahoma, Geneva, sans-serif',
-				columnClip: false,
-				columnAutosizing: false,
-				renderFalsy: true,
-				//enableContinuousRepaint: true
-			});
+	/**
+	 *
+	 * The default renderer is a partial cell renderer that only redraws the cells that have changed
+	 *
+	 */
+	grid.addProperties({
+		showRowNumbers: false,
+		showFilterRow: false,
+		backgroundColor: 'white',
+		foregroundSelectionFont: '13px Tahoma, Geneva, sans-serif',
+		columnClip: false,
+		columnAutosizing: false,
+		renderFalsy: true,
+		enableContinuousRepaint: true
+	});
 
-			//Data Model Interface
-//
-//			grid.behavior.dataModel.getRow = function(y){
-//					return repo.getRow(y);
-//			};
-//			grid.behavior.dataModel.getRowCount = function(){
-//				return repo.getRowCount();
-//			};
-//			grid.behavior.dataModel.getValue = function(c, r){
-//					return repo.getValue(c, r);
-//			};
+	//Data Model Interface
+	//
+	//			grid.behavior.dataModel.getRow = function(y){
+	//					return repo.getRow(y);
+	//			};
+	//			grid.behavior.dataModel.getRowCount = function(){
+	//				return repo.getRowCount();
+	//			};
+	//			grid.behavior.dataModel.getValue = function(c, r){
+	//					return repo.getValue(c, r);
+	//			};
 
-			repo.start();
-		</script>
-	</body>
+	repo.start();
+</script>
+</body>
 </html>
